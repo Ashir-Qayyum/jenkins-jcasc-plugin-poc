@@ -1,0 +1,7 @@
+unclassified:         
+                          # THis file and fields are just for info purpose such that later to send email or notify in slack etc.
+  location:
+
+    url: "http://localhost:8080/"      # This is the jenkins url i am telling to jenkins
+
+    adminAddress: "muhammadashir2004@gmail.com"   # This is my email I am tellig to Jenkins
