@@ -1,6 +1,6 @@
 image:
   repository: ashirqayyum/sms-frontend
-  tag: "1.1"
+  tag: "jenkins"
 
 service:
   type: NodePort

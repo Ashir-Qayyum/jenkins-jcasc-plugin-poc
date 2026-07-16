@@ -1,3 +1,5 @@
+# MY CURRENT values.yaml
+
 jenkins:      # All these values belongs to the dependency helm chart i.e. the official helm chart I included in the Chart.yaml
               # dependency section, so these values will be used as e.g. .Values.controller.admin.username directly by the 
               # jenkins dependency helm chart included
@@ -46,14 +48,7 @@ jenkins:      # All these values belongs to the dependency helm chart i.e. the o
         configAutoReload:
           enabled: true     # This will ensure the JCasC is configured auto
 
-#      additionalExistingConfigMaps:
-#        - name: jenkins-jcasc   # Giving my Custom ConfigMap I created with name 'jenkis-jcasc' inside templates/jcasc-configmap.yaml
 
-
-
-    persistence:
-      enabled: true
-      size: 8Gi
 
     installPlugins:       # Installing Plugins along with jenkins as supported in official jenkins helm chart
 
@@ -82,6 +77,63 @@ jenkins:      # All these values belongs to the dependency helm chart i.e. the o
       - role-strategy
 
       - dark-theme
+
+#    sidecars:           # ADDING THIS SIDECAR TO IMPLEMENT DinD TO RUN THE PIPELINE AS DOCKER DAEMON WAS NEEDED
+                        # THE ALTERNATIVE IS CONFIGURING AND USING JENKINS K8S AGENTS
+    
+    sidecars:
+      additionalSidecarContainers:
+        - name: dind
+          image: docker:28-dind
+          securityContext:
+            privileged: true
+            runAsUser: 0
+            runAsGroup: 0
+          volumeMounts:
+            - name: docker-socket
+              mountPath: /var/run
+            - name: docker-data
+              mountPath: /var/lib/docker
+          env:
+          - name: DOCKER_TLS_CERTDIR
+            value: ""
+
+    containerEnv:
+      - name: DOCKER_HOST
+        value: unix:///var/run/docker.sock
+
+
+    containerSecurityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      readOnlyRootFilesystem: false
+      allowPrivilegeEscalation: true
+
+    podSecurityContextOverride:
+      runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      fsGroup: 0
+
+
+
+  persistence:
+    enabled: true
+    size: 8Gi
+
+    volumes:
+      - name: docker-socket
+        emptyDir: {}
+
+      - name: docker-data
+        emptyDir: {}
+
+    mounts:
+      - name: docker-socket
+        mountPath: /var/run
+
+      - name: docker-data
+        mountPath: /var/lib/docker
 
 
 
