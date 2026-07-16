@@ -3,7 +3,12 @@ jenkins:      # All these values belongs to the dependency helm chart i.e. the o
               # jenkins dependency helm chart included
 
   controller:
-
+    
+    image:                    # I Added this section later when implementing CI/CD. Jenkins official image didn't include tools
+      registry: docker.io     # like helm, kubectl, docker CLI etc. as i am not yet implementing jenkins k8s agent AND the pipeline 
+                              # will be run inside the jenkins pod container. The image Dockerfile is in dir: jenkins-custom-image
+      repository: ashirqayyum/custom-jenkins
+      tag: "1.0"
     # additionalVolumes:      # This will mount my configMap containing jcasc files as a volume
     #   - name: jcasc-config
     #     configMap:
