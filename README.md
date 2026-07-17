@@ -13,8 +13,8 @@ I have written separate README.md or Comments for each sections explaining the W
 For Pipeline Script, I used Jenkins SCM Method writing Jenkinsfile to keep in Git Repository<br>
 along with the Jenkins Shared-Library Approach for stage functions
 
-For Deployment, I used Student Management System Application, cloned from:
+For Deployment, I used Student Management System Application, cloned from:<br>
 https://github.com/medinar/full-stack-spring-boot-react.git
 
-I used Helm Charts for Managed Kubernetes Deployment I created in the following project:
+I used Helm Charts for Managed Kubernetes Deployment I created in the following project:<br>
 https://github.com/Ashir-Qayyum/sensiply-training-helm-poc.git
