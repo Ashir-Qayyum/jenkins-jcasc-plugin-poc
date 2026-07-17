@@ -1,3 +1,4 @@
+// I configured this shared library in Jenkins using JCasC plugin writing config files
 @Library('sms-library') _
 
 pipeline {
