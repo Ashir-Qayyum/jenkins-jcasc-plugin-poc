@@ -57,6 +57,7 @@ set into the jenkins pod at loc: /var/jenkins_home/casc_configs
 
 I created separate namespace 'jenkins'<br>
 >> kubectl create namespace jenkins<br>
+
 Verified with: kubectl get ns
 
 Then I installed jenkins using the values.yaml<br>
@@ -64,6 +65,7 @@ Then I installed jenkins using the values.yaml<br>
 
 I get the jenkins service name using:<br>
 >> kubectl get svc -n jenkins<br>
+
 Then Port-forwarded the svc to Access jenkins UI at localhost:8080<br>
 ,as I am using Minikube on docker-driver with PortType NodePort:<br>
 >> kubectl port-forward -n jenkins svc/jenkins 8080:8080 &
