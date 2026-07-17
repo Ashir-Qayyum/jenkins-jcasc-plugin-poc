@@ -1,5 +1,3 @@
-# MY CURRENT values.yaml
-
 jenkins:      # All these values belongs to the dependency helm chart i.e. the official helm chart I included in the Chart.yaml
               # dependency section, so these values will be used as e.g. .Values.controller.admin.username directly by the 
               # jenkins dependency helm chart included
@@ -11,21 +9,6 @@ jenkins:      # All these values belongs to the dependency helm chart i.e. the o
                               # will be run inside the jenkins pod container. The image Dockerfile is in dir: jenkins-custom-image
       repository: ashirqayyum/custom-jenkins
       tag: "1.0"
-    # additionalVolumes:      # This will mount my configMap containing jcasc files as a volume
-    #   - name: jcasc-config
-    #     configMap:
-    #       name: jenkins-jcasc
-
-
-    # additionalVolumeMounts:   # This will mount the vol location from where jenkins import jcasc config files
-    #   - name: jcasc-config
-    #     mountPath: /var/jenkins_home/casc_configs
-    #     readOnly: true
-
-
-    # env:        # This sets the env var inside jenkins pod container which is used by JCasC to load config files
-    #   - name: CASC_JENKINS_CONFIG
-    #     value: /var/jenkins_home/casc_configs
 
 
     admin:
@@ -34,21 +17,23 @@ jenkins:      # All these values belongs to the dependency helm chart i.e. the o
 
     serviceType: NodePort   # As I am using MINIKUBE for kubernetes on docker driver on colima
     
-    initializeOnce: false       # This is because  there's pvc. IF later we modify the plugins or jcasc files and upgrade helm,
-                                # so the data inside pvc also get update again
+    initializeOnce: false       # This is because  there's a pvc implemented. IF later we modify the plugins or jcasc files and upgrade helm,
+                                # then the data inside pvc could also get update again
     
     JCasC:
-      enabled: true   # It enabled JCasC
-      defaultConfig: false    # It disabled default config of JCasC
+      enabled: true                   # It enabled JCasC
+      defaultConfig: false            # It disabled default config of JCasC
 
-      securityRealm: ""             # THis is avoid clash between my securityREalm object & jenkins helm default one
-      authorizationStrategy: ""
+      securityRealm: ""               # THis is avoid clash between my securityREalm object & jenkins official helm chart default generated
+      authorizationStrategy: ""       
 
       sidecars:
         configAutoReload:
           enabled: true     # This will ensure the JCasC is configured auto
 
-
+      # The other method for installing all JCasC configs into Jenkins instance is including the configs codes
+      # in the configScripts section under JCasC object in this values.yaml also supported officially BUT I implemented the
+      # separate JCasC files Method which keeps the files separate for better readability and organization.
 
     installPlugins:       # Installing Plugins along with jenkins as supported in official jenkins helm chart
 
@@ -76,66 +61,65 @@ jenkins:      # All these values belongs to the dependency helm chart i.e. the o
       - matrix-auth
       - role-strategy
 
-      - dark-theme
+      - dark-theme        
 
-#    sidecars:           # ADDING THIS SIDECAR TO IMPLEMENT DinD TO RUN THE PIPELINE AS DOCKER DAEMON WAS NEEDED
-                        # THE ALTERNATIVE IS CONFIGURING AND USING JENKINS K8S AGENTS
-    
-    sidecars:
-      additionalSidecarContainers:
-        - name: dind
-          image: docker:28-dind
-          securityContext:
-            privileged: true
+                      # I Added the following sections later when implementing CI/CD. EVERYTHING BELOW IS CONFIGURED FOR RUNNING PIPELINE
+                                        
+    sidecars:                           # ADDING THIS DinD SIDECAR CONTAINER TO SUPPORT THE PIPELINE. AS DOCKER DAEMON WAS NEEDED
+      additionalSidecarContainers:      # The jenkins pod container doesnot run docker daemon so it couldnot build the
+        - name: dind                    # image. although i installed docker CLI, & other tools with custom image BUT daemon was required
+          image: docker:28-dind         # This sidecar DinD container is launched as it has the docker daemon which was shared to the
+          securityContext:              # jenkins container through docker-socket at loc: /var/run. This daemon is used by jenkins controller to build the image during pipeline execution
+            privileged: true            # THE ALTERNATIVE IS CONFIGURING AND USING JENKINS K8S AGENTS
             runAsUser: 0
-            runAsGroup: 0
+            runAsGroup: 0               # Docker daemon requires priveleged mode, and run as root. Without it, the dockerd doesnot start
           volumeMounts:
             - name: docker-socket
-              mountPath: /var/run
+              mountPath: /var/run       # It contains docker.sock
             - name: docker-data
-              mountPath: /var/lib/docker
+              mountPath: /var/lib/docker  # It contains docker images, build layers     THEY ARE BEING SHARED BETWEEN JENKINS & DinD CONTAIERS
           env:
           - name: DOCKER_TLS_CERTDIR
-            value: ""
+            value: ""                   
 
     containerEnv:
       - name: DOCKER_HOST
-        value: unix:///var/run/docker.sock
+        value: unix:///var/run/docker.sock   # Disables automatic TLS configuration so Jenkins can communicate with dockerd over the local Unix socket
 
 
-    containerSecurityContext:
-      runAsUser: 0
+    containerSecurityContext:           # Giving Jenkins container root access such that the docker CLI can access the shared docker.sock
+      runAsUser: 0                      # now jenkins will run as a root
       runAsGroup: 0
       readOnlyRootFilesystem: false
       allowPrivilegeEscalation: true
 
-    podSecurityContextOverride:
-      runAsUser: 0
-      runAsGroup: 0
+    podSecurityContextOverride:       # It is for overriding the default security context whcih was set
+      runAsUser: 0                    # by the official helm chart by-default to run containers as non root only for the entire pod.
+      runAsGroup: 0                   # DinD sidecar requires root priveleges. The pod security context is overridden to allow root containers
       runAsNonRoot: false
       fsGroup: 0
 
 
 
-  persistence:
-    enabled: true
+  persistence:                      # It is creating PVC use to store Jenkins home. This will keep the jenkins data such that 
+    enabled: true                   # the recreation won't lose it .
     size: 8Gi
 
-    volumes:
-      - name: docker-socket
+    volumes:                        # Creatig temporary storage shared by all containers in the pod
+      - name: docker-socket         # These volumes exist only while the Pod exists.
         emptyDir: {}
 
       - name: docker-data
         emptyDir: {}
 
-    mounts:
-      - name: docker-socket
-        mountPath: /var/run
+    mounts:                         # here attaching the volumes into jenkins and dind containers such that both can access the 
+      - name: docker-socket         # same docker.sock and docker images storage
+        mountPath: /var/run         # FOR docker.sock
 
       - name: docker-data
-        mountPath: /var/lib/docker
+        mountPath: /var/lib/docker  # FOR docker image storage
 
 
 
-  agent:
+  agent:                          # AS i am not creatig any agent , RATHER runing the jobs inside jenkins controller pod
     enabled: false

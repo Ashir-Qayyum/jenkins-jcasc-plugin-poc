@@ -69,4 +69,4 @@ Then Port-forwarded the svc to Access jenkins UI at localhost:8080<br>
 >> kubectl port-forward -n jenkins svc/jenkins 8080:8080 &
 
 Logged in with username & password I provided in the values.yaml<br>
-, BUT later changed the password
+, AND later changed the password
