@@ -1,5 +1,5 @@
 /jenkins-jcasc-helm/rendered.yaml
 
-/jenkins-jcasc-helm/files/jcasc/credentials.yaml
+# /jenkins-jcasc-helm/files/jcasc/credentials.yaml
 
 .DS_Store
